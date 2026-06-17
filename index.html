@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outreach — LinkedIn pipeline tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1f2e;
+  --paper:#f5f3ed;
+  --card:#ffffff;
+  --slate:#3d4451;
+  --slate-soft:#7b8190;
+  --line:#e3e0d8;
+  --accent:#0a66c2;
+  --accent-soft:#e8f1fb;
+  --amber:#d4a574;
+  --amber-soft:#f7ecdd;
+  --amber-deep:#8a5a26;
+  --good:#3f7d4f;
+  --good-soft:#e6f1e8;
+  --warn:#c0392b;
+  --warn-soft:#fbe9e7;
+  --radius:10px;
+  --radius-lg:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'IBM Plex Sans',sans-serif;
+  background:var(--paper);
+  color:var(--slate);
+  min-height:100vh;
+  display:flex;
+}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;color:var(--ink);}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* layout */
+.rail{
+  width:220px;
+  flex-shrink:0;
+  background:var(--ink);
+  color:#f5f3ed;
+  display:flex;
+  flex-direction:column;
+  padding:24px 16px;
+  position:sticky;
+  top:0;
+  height:100vh;
+}
+.rail-brand{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:18px;
+  margin-bottom:4px;
+  letter-spacing:-0.02em;
+}
+.rail-sub{
+  font-size:11px;
+  color:#9aa3b5;
+  margin-bottom:32px;
+  font-family:'IBM Plex Mono',monospace;
+}
+.rail-nav{display:flex;flex-direction:column;gap:4px;}
+.rail-btn{
+  display:flex;align-items:center;gap:10px;
+  background:none;border:none;color:#cfd3dd;
+  font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;font-weight:500;
+  padding:10px 12px;border-radius:8px;text-align:left;cursor:pointer;
+  transition:background .12s,color .12s;
+}
+.rail-btn:hover{background:#252b3d;color:#fff;}
+.rail-btn.active{background:var(--amber);color:#3a2a14;font-weight:600;}
+.rail-foot{
+  margin-top:auto;
+  font-size:11px;color:#7d8499;line-height:1.6;
+  padding-top:16px;border-top:1px solid #2a2f40;
+}
+.rail-foot b{color:#cfd3dd;}
+
+main{flex:1;padding:32px 40px;max-width:1100px;}
+.view{display:none;}
+.view.active{display:block;}
+.page-head{margin-bottom:24px;}
+.page-head h1{font-size:24px;font-weight:600;margin-bottom:4px;}
+.page-head p{font-size:13px;color:var(--slate-soft);}
+
+/* cards & generic */
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  padding:20px 22px;
+  margin-bottom:18px;
+}
+label{display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:6px;letter-spacing:.01em;}
+textarea,input,select{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:9px 11px;
+  font-size:13.5px;
+  font-family:inherit;
+  background:#fbfaf7;
+  color:var(--ink);
+  margin-bottom:14px;
+  transition:border-color .12s;
+}
+textarea{min-height:80px;resize:vertical;}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent);background:#fff;}
+.field-row{display:flex;gap:14px;}
+.field-row>div{flex:1;}
+
+button.primary{
+  background:var(--ink);color:#fff;border:none;border-radius:8px;
+  padding:10px 18px;font-size:13.5px;font-weight:600;cursor:pointer;
+  font-family:'IBM Plex Sans',sans-serif;
+  transition:background .12s,transform .08s;
+}
+button.primary:hover{background:#2a3142;}
+button.primary:active{transform:scale(.98);}
+button.primary:disabled{background:#b8bcc6;cursor:default;}
+button.ghost{
+  background:none;border:1px solid var(--line);border-radius:8px;
+  padding:8px 14px;font-size:12.5px;font-weight:500;color:var(--slate);
+  cursor:pointer;font-family:'IBM Plex Sans',sans-serif;
+  transition:background .12s,border-color .12s;
+}
+button.ghost:hover{background:var(--paper);border-color:var(--slate-soft);}
+button.danger-ghost{
+  background:none;border:1px solid var(--warn-soft);border-radius:8px;
+  padding:6px 10px;font-size:12px;color:var(--warn);cursor:pointer;
+}
+button.danger-ghost:hover{background:var(--warn-soft);}
+button.danger-ghost.confirming{background:var(--warn);color:#fff;border-color:var(--warn);}
+
+/* note generator */
+.note-result{
+  border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;margin-top:12px;background:#fbfaf7;
+}
+.note-result p{font-size:14px;line-height:1.55;margin-bottom:10px;}
+.note-meta{display:flex;align-items:center;justify-content:space-between;}
+.count-pill{
+  font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+  padding:3px 9px;border-radius:99px;font-weight:500;
+}
+.count-pill.ok{background:var(--good-soft);color:var(--good);}
+.count-pill.over{background:var(--warn-soft);color:var(--warn);}
+.copy-btn{
+  display:flex;align-items:center;gap:6px;
+}
+.status-line{font-size:12.5px;color:var(--slate-soft);margin-top:10px;min-height:18px;}
+.status-line.error{color:var(--warn);}
+.send-to-pipeline{font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;}
+
+/* my profile card */
+.myprofile-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.myprofile-summary{font-size:13px;color:var(--slate);line-height:1.6;}
+.myprofile-summary .nm{font-weight:600;color:var(--ink);}
+.myprofile-empty{font-size:13px;color:var(--slate-soft);}
+
+/* dashboard */
+.stat-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:12px;margin-bottom:8px;
+}
+.stat{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;
+}
+.stat .num{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:600;color:var(--ink);}
+.stat .lbl{font-size:11.5px;color:var(--slate-soft);margin-top:2px;}
+.stat.amber .num{color:var(--amber-deep);}
+.stat.warn .num{color:var(--warn);}
+
+/* stage tracker (signature element) */
+.stage-track{display:flex;align-items:center;gap:2px;}
+.stage-dot{
+  width:9px;height:9px;border-radius:50%;background:var(--line);
+  flex-shrink:0;transition:background .15s;
+}
+.stage-dot.done{background:var(--accent);}
+.stage-dot.current{background:var(--amber);width:11px;height:11px;}
+.stage-line{flex:1;height:1px;background:var(--line);min-width:4px;}
+.stage-line.done{background:var(--accent);}
+.stage-label{font-size:10px;color:var(--slate-soft);margin-top:4px;font-family:'IBM Plex Mono',monospace;}
+
+/* pipeline table */
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;}
+.toolbar input[type=text]{margin-bottom:0;max-width:260px;}
+.filter-row{display:flex;gap:8px;}
+.filter-row select{margin-bottom:0;width:auto;min-width:140px;}
+
+/* pipeline card list */
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap;}
+.toolbar input[type=text]{margin-bottom:0;max-width:260px;}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;}
+.filter-row select{margin-bottom:0;width:auto;min-width:160px;}
+
+.pl-list{display:flex;flex-direction:column;gap:10px;}
+.pl-card{
+  border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;background:#fbfaf7;
+  display:grid;grid-template-columns:1.4fr 1fr 1.6fr auto;gap:16px;align-items:start;
+}
+.pl-card .pl-identity input{
+  margin-bottom:6px;font-size:13px;
+}
+.pl-card .pl-identity input:last-child{margin-bottom:0;}
+.pl-card .pl-name-input{font-weight:600;color:var(--ink);}
+.pl-card .pl-meta{display:flex;flex-direction:column;gap:6px;}
+.pl-card .pl-meta select{margin-bottom:0;}
+.pl-card .pl-note-col textarea{
+  margin-bottom:0;min-height:64px;font-size:12.5px;width:100%;resize:vertical;
+}
+.pl-card .pl-actions{display:flex;flex-direction:column;align-items:flex-end;gap:8px;height:100%;}
+.date-row{display:flex;gap:8px;}
+.date-row > div{flex:1;}
+.date-row label{font-size:10.5px;color:var(--slate-soft);font-weight:500;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em;}
+.date-row input[type=date]{margin-bottom:0;font-size:12px;padding:6px 8px;}
+.overdue-flag{
+  display:inline-block;font-size:10px;font-weight:600;color:var(--warn);
+  background:var(--warn-soft);padding:2px 7px;border-radius:99px;
+}
+.empty-state{
+  text-align:center;padding:50px 20px;color:var(--slate-soft);font-size:13.5px;
+}
+.empty-state .add-link{color:var(--accent);cursor:pointer;text-decoration:underline;}
+
+@media(max-width:880px){
+  .pl-card{grid-template-columns:1fr;}
+  .pl-card .pl-actions{flex-direction:row;align-items:center;}
+}
+
+/* how-to */
+.howto h3{font-size:14px;margin:18px 0 6px;}
+.howto p{font-size:13px;line-height:1.6;color:var(--slate);margin-bottom:8px;}
+.howto ul{margin:0 0 8px 18px;font-size:13px;line-height:1.7;color:var(--slate);}
+.howto .pill{
+  display:inline-block;background:var(--amber-soft);color:var(--amber-deep);
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;margin-bottom:6px;
+}
+
+@media(max-width:880px){
+  .rail{display:none;}
+  main{padding:20px;}
+  .field-row{flex-direction:column;}
+  .toolbar{flex-direction:column;align-items:stretch;}
+}
+
+/* modal */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(26,31,46,.45);
+  align-items:center;justify-content:center;z-index:100;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--card);border-radius:var(--radius-lg);
+  padding:22px 24px;width:380px;max-width:90vw;
+  box-shadow:0 8px 30px rgba(0,0,0,.15);
+}
+
+/* toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;
+  font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+  z-index:200;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* weekly sync */
+.sync-item{
+  display:flex;align-items:center;gap:12px;padding:10px 4px;
+  border-bottom:1px solid var(--line);
+}
+.sync-item:last-child{border-bottom:none;}
+.sync-item input[type=checkbox]{
+  width:18px;height:18px;margin:0;accent-color:var(--good);cursor:pointer;
+}
+.sync-item .info{flex:1;}
+.sync-item .info .nm{font-weight:600;color:var(--ink);font-size:13.5px;}
+.sync-item .info .sub{font-size:11.5px;color:var(--slate-soft);}
+.sync-item .badge{
+  font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--slate-soft);
+}
+.sync-empty{text-align:center;padding:40px 20px;color:var(--slate-soft);font-size:13.5px;}
+.sync-footer{
+  display:flex;justify-content:flex-end;margin-top:14px;
+}
+</style>
+</head>
+<body>
+
+<nav class="rail">
+  <div class="rail-brand">Outreach</div>
+  <div class="rail-sub">CSE referral pipeline</div>
+  <div class="rail-nav">
+    <button class="rail-btn active" data-view="generate"><i>✎</i> Generate note</button>
+    <button class="rail-btn" data-view="pipeline"><i>☷</i> Pipeline</button>
+    <button class="rail-btn" data-view="sync"><i>↻</i> Weekly sync</button>
+    <button class="rail-btn" data-view="dashboard"><i>◔</i> Dashboard</button>
+    <button class="rail-btn" data-view="howto"><i>?</i> How this works</button>
+    <button class="rail-btn" data-view="settings"><i>⚙</i> Settings</button>
+  </div>
+  <div class="rail-foot">
+    Saved automatically in this browser.<br>
+    <b>Send cap:</b> 15-20 connection requests / day.
+  </div>
+</nav>
+
+<main>
+
+  <!-- GENERATE VIEW -->
+  <section class="view active" id="view-generate">
+    <div class="page-head">
+      <h1>Generate a connection note</h1>
+      <p>Paste what you know about them. Get two drafts, both under 300 characters.</p>
+    </div>
+
+    <div class="card" id="myProfileCard">
+      <div class="myprofile-head">
+        <div>
+          <h3 style="font-size:14px;margin-bottom:2px;">Your profile</h3>
+          <p style="font-size:12px;color:var(--slate-soft);" id="myProfileSub">Saved once — used for every note you generate.</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="ghost" id="toggleProfileBtn">Hide</button>
+          <button class="ghost" id="editProfileBtn">Edit</button>
+        </div>
+      </div>
+      <div id="myProfileBody">
+        <div id="myProfileView"></div>
+        <div id="myProfileEdit" style="display:none;">
+          <label for="myname">Your name</label>
+          <input id="myname" placeholder="e.g. Alex Rivera">
+          <label for="mydetails">Background — major, year, school, general interests</label>
+          <textarea id="mydetails" placeholder="e.g. CSE sophomore at ASU. Interested in embedded systems, computer architecture, and low-level programming. Worked on a WiFi sensing project with ESP32 boards."></textarea>
+          <button class="primary" id="saveProfileBtn">Save profile</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label for="profile">Their profile — name, title, company, background, recent posts</label>
+      <textarea id="profile" placeholder="e.g. Jordan Lee, Hardware Engineer at NVIDIA. ASU EE alum. Posted last week about debugging CUDA kernels with Nsight."></textarea>
+
+      <button class="primary" id="genBtn">Generate notes</button>
+      <div class="status-line" id="genStatus"></div>
+    </div>
+
+    <div id="genResults"></div>
+  </section>
+
+  <!-- PIPELINE VIEW -->
+  <section class="view" id="view-pipeline">
+    <div class="page-head">
+      <h1>Pipeline</h1>
+      <p>Every person you've reached out to, in one place.</p>
+    </div>
+
+    <div class="card" style="padding:16px 18px;">
+      <div class="toolbar">
+        <input type="text" id="searchBox" placeholder="Search name or company...">
+        <div class="filter-row">
+          <select id="statusFilter">
+            <option value="">All statuses</option>
+            <option>Researching</option>
+            <option>Note Drafted</option>
+            <option>Sent</option>
+            <option>Accepted</option>
+            <option>Replied</option>
+            <option>Conversation Ongoing</option>
+            <option>Referral Asked</option>
+            <option>Referred</option>
+            <option>Declined / No response</option>
+            <option>Not pursuing</option>
+          </select>
+          <button class="primary" id="addRowBtn">+ Add contact</button>
+        </div>
+      </div>
+      <div id="pipelineTableWrap"></div>
+    </div>
+  </section>
+
+  <!-- WEEKLY SYNC VIEW -->
+  <section class="view" id="view-sync">
+    <div class="page-head">
+      <h1>Weekly sync</h1>
+      <p>Open LinkedIn → My Network → Connections, sorted by date added. Check off everyone who's now connected — the rest stay as "Sent".</p>
+    </div>
+
+    <div class="card" id="syncCard"></div>
+  </section>
+
+  <!-- DASHBOARD VIEW -->
+  <section class="view" id="view-dashboard">
+    <div class="page-head">
+      <h1>Dashboard</h1>
+      <p>Where your pipeline stands right now.</p>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="card">
+      <h3 style="font-size:14px;margin-bottom:10px;">Stage progression</h3>
+      <div id="stageOverview"></div>
+    </div>
+
+    <div class="card" id="overdueCard" style="display:none;">
+      <h3 style="font-size:14px;margin-bottom:10px;color:var(--warn);">Follow-ups due</h3>
+      <div id="overdueList"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS VIEW -->
+  <section class="view" id="view-settings">
+    <div class="page-head">
+      <h1>Settings</h1>
+      <p>Configure your Worker URL and manage your pipeline data.</p>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:14px;margin-bottom:4px;">Cloudflare Worker URL</h3>
+      <p style="font-size:12.5px;color:var(--slate-soft);margin-bottom:12px;">The AI note generator calls this URL instead of Anthropic directly. Deploy your Worker first, then paste its URL here.</p>
+      <label for="workerUrl">Worker URL</label>
+      <input type="text" id="workerUrl" placeholder="https://your-worker.your-subdomain.workers.dev">
+      <button class="primary" id="saveWorkerBtn">Save URL</button>
+      <div class="status-line" id="workerStatus"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:14px;margin-bottom:4px;">Test connection</h3>
+      <p style="font-size:12.5px;color:var(--slate-soft);margin-bottom:12px;">Send a quick ping to your Worker to confirm it's reachable before generating notes.</p>
+      <button class="ghost" id="testWorkerBtn">Test Worker</button>
+      <div class="status-line" id="testStatus"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:14px;margin-bottom:4px;">Export pipeline</h3>
+      <p style="font-size:12.5px;color:var(--slate-soft);margin-bottom:12px;">Download all your pipeline data as a JSON file. Use this to back up or move to another device.</p>
+      <button class="ghost" id="exportBtn">Download pipeline.json</button>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:14px;margin-bottom:4px;">Import pipeline</h3>
+      <p style="font-size:12.5px;color:var(--slate-soft);margin-bottom:12px;">Load a previously exported JSON file. This will <b>merge</b> with your current data (no duplicates by ID).</p>
+      <label for="importFile" class="file-label">Choose file</label>
+      <input type="file" id="importFile" accept=".json" style="display:none;">
+      <button class="ghost" id="importBtn">Import from JSON</button>
+      <div class="status-line" id="importStatus"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="font-size:14px;margin-bottom:4px;color:var(--warn);">Clear all data</h3>
+      <p style="font-size:12.5px;color:var(--slate-soft);margin-bottom:12px;">Permanently delete your entire pipeline from this browser. Export first if you want a backup.</p>
+      <button class="danger-ghost" id="clearDataBtn">Clear all pipeline data</button>
+      <div class="status-line" id="clearStatus"></div>
+    </div>
+  </section>
+  <section class="view" id="view-howto">
+    <div class="page-head">
+      <h1>How this works</h1>
+      <p>The weekly loop that runs this whole thing.</p>
+    </div>
+    <div class="card howto">
+      <span class="pill">Step 1 — Research</span>
+      <p>Find 10-15 profiles a week at companies you care about. Add each as a contact in the Pipeline tab with their name, company, title, and LinkedIn URL. Set status to <b>Researching</b>.</p>
+
+      <span class="pill">Step 2 — Draft</span>
+      <p>Paste what you know about them (bio, recent posts, career path) into the Generate tab. Pick the note that sounds most like you and send it to the pipeline — it lands in that contact's notes, ready to copy.</p>
+
+      <span class="pill">Step 3 — Send</span>
+      <p>Open LinkedIn and send the connection request manually, pasting the generated note. Cap yourself at <b>15-20 sends per day</b> — this keeps your account safe and matches LinkedIn's own soft limits.</p>
+      <p>Mark the contact <b>Sent</b> and fill in the date.</p>
+
+      <span class="pill">Step 4 — Sync weekly</span>
+      <p>Once a week, open My Network → Connections, sorted by date added. For anyone who accepted, mark them <b>Accepted</b> in the pipeline.</p>
+
+      <span class="pill">Step 5 — Conversation</span>
+      <ul>
+        <li><b>First message (1-2 days after acceptance):</b> thank them for connecting, ask one specific, easy-to-answer question about their path or role.</li>
+        <li><b>Follow-ups (over weeks, only if they reply):</b> follow their lead — ask about their day-to-day, advice for your major, share your own projects only if relevant.</li>
+        <li><b>Referral ask (3-6 weeks in, only after real conversation):</b> "I've really enjoyed our conversations — I'm applying for Summer 2027 internships and [Company] is high on my list. Would you be comfortable referring me, or pointing me to the right person? No worries at all if not!"</li>
+      </ul>
+
+      <span class="pill">Safety</span>
+      <ul>
+        <li>Never use bots or browser extensions to send connections or messages — this is the fastest way to get permanently banned.</li>
+        <li>Stay under 15-20 new requests per day.</li>
+        <li>Keep notes under 300 characters — this app flags it for you automatically.</li>
+        <li>All your data lives in this browser only (localStorage). Nothing is sent anywhere except the note-generation request to Claude's API.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<!-- SAVE TO PIPELINE MODAL -->
+<div class="modal-overlay" id="saveModalOverlay">
+  <div class="modal">
+    <h3 style="font-size:15px;margin-bottom:14px;">Add their name to save</h3>
+    <label for="modalName">Their name</label>
+    <input type="text" id="modalName" placeholder="Required">
+    <div class="field-row">
+      <div>
+        <label for="modalCompany">Company</label>
+        <input type="text" id="modalCompany">
+      </div>
+      <div>
+        <label for="modalTitle">Title</label>
+        <input type="text" id="modalTitle">
+      </div>
+    </div>
+    <label for="modalUrl">LinkedIn URL</label>
+    <input type="text" id="modalUrl">
+    <div class="status-line" id="modalStatus"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+      <button class="ghost" id="modalCancel">Cancel</button>
+      <button class="primary" id="modalSave">Save to pipeline</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STAGES = ['Researching','Note Drafted','Sent','Accepted','Replied','Conversation Ongoing','Referral Asked'];
+const PROGRESSION_STAGES = [
+  {label:'Sent', statuses:['Sent']},
+  {label:'Need to start conversation', statuses:['Accepted']},
+  {label:'Conversation ongoing', statuses:['Replied','Conversation Ongoing']},
+  {label:'Referral asked', statuses:['Referral Asked']}
+];
+const CLOSED_STAGES = ['Referred','Declined / No response','Not pursuing'];
+const ALL_STATUSES = [...STAGES, ...CLOSED_STAGES];
+
+const STORE_KEY = 'outreach_pipeline_v1';
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return [];
+}
+function cryptoId(){return 'c'+Math.random().toString(36).slice(2,10);}
+let data = loadData();
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+
+const PROFILE_KEY = 'outreach_my_profile_v1';
+function loadMyProfile(){
+  try{
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { name:'', details:'' };
+}
+let myProfile = loadMyProfile();
+function saveMyProfile(){ localStorage.setItem(PROFILE_KEY, JSON.stringify(myProfile)); }
+
+const PROFILE_COLLAPSE_KEY = 'outreach_profile_collapsed_v1';
+function isProfileCollapsed(){ return localStorage.getItem(PROFILE_COLLAPSE_KEY) === '1'; }
+function setProfileCollapsed(val){ localStorage.setItem(PROFILE_COLLAPSE_KEY, val ? '1':'0'); }
+
+// ---------- nav ----------
+document.querySelectorAll('.rail-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.rail-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    if(btn.dataset.view==='pipeline') renderPipeline();
+    if(btn.dataset.view==='sync') renderSync();
+    if(btn.dataset.view==='dashboard') renderDashboard();
+    if(btn.dataset.view==='settings') document.getElementById('workerUrl').value = localStorage.getItem('outreach_worker_url') || '';
+  });
+});
+
+// ---------- my profile ----------
+let forceEditProfile = false;
+function renderMyProfile(){
+  const view = document.getElementById('myProfileView');
+  const edit = document.getElementById('myProfileEdit');
+  const body = document.getElementById('myProfileBody');
+  const toggleBtn = document.getElementById('toggleProfileBtn');
+  const sub = document.getElementById('myProfileSub');
+  const hasProfile = myProfile.name || myProfile.details;
+  const showEdit = !hasProfile || forceEditProfile;
+
+  if(showEdit){
+    view.style.display = 'none';
+    edit.style.display = 'block';
+    document.getElementById('myname').value = myProfile.name;
+    document.getElementById('mydetails').value = myProfile.details;
+  } else {
+    view.style.display = 'block';
+    edit.style.display = 'none';
+    view.innerHTML = `<div class="myprofile-summary"><span class="nm">${esc(myProfile.name)||'(no name set)'}</span><br>${esc(myProfile.details)||'<span class="myprofile-empty">No background added yet.</span>'}</div>`;
+  }
+
+  if(hasProfile && !showEdit && isProfileCollapsed()){
+    body.style.display = 'none';
+    toggleBtn.textContent = 'Show';
+    sub.textContent = `${myProfile.name || 'Profile'} — saved`;
+  } else {
+    body.style.display = 'block';
+    toggleBtn.textContent = 'Hide';
+    sub.textContent = 'Saved once — used for every note you generate.';
+  }
+}
+document.getElementById('toggleProfileBtn').addEventListener('click', ()=>{
+  const collapsed = !isProfileCollapsed();
+  setProfileCollapsed(collapsed);
+  renderMyProfile();
+});
+document.getElementById('editProfileBtn').addEventListener('click', ()=>{
+  forceEditProfile = true;
+  setProfileCollapsed(false);
+  renderMyProfile();
+});
+document.getElementById('saveProfileBtn').addEventListener('click', ()=>{
+  myProfile.name = document.getElementById('myname').value.trim();
+  myProfile.details = document.getElementById('mydetails').value.trim();
+  saveMyProfile();
+  forceEditProfile = false;
+  setProfileCollapsed(true);
+  renderMyProfile();
+  showToast('Profile saved');
+});
+renderMyProfile();
+
+// ---------- note generator ----------
+document.getElementById('genBtn').addEventListener('click', generateNotes);
+
+async function generateNotes(){
+  const profile = document.getElementById('profile').value.trim();
+  const btn = document.getElementById('genBtn');
+  const status = document.getElementById('genStatus');
+  const results = document.getElementById('genResults');
+
+  if(!profile){
+    status.textContent = 'Paste some profile info first.';
+    status.className = 'status-line error';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  results.innerHTML = '';
+  if(!myProfile.name && !myProfile.details){
+    status.textContent = 'Tip: fill in "Your profile" above so notes can find real common ground. Generating...';
+    status.className = 'status-line';
+  } else {
+    status.textContent = '';
+    status.className = 'status-line';
+  }
+
+  const systemPrompt = `You are helping a sophomore Computer Systems Engineering student write LinkedIn
+connection request notes. The student is genuinely curious, early in their career,
+and reaching out to learn — not to ask for favors immediately.
+
+You will receive raw profile info (could be messy, pasted from LinkedIn, a bio, posts, etc).
+
+FIRST, extract these fields from the profile text, using ONLY information actually present.
+If a field is not present or not determinable, use an empty string "" — do NOT guess, invent,
+or use placeholder values:
+- name: the person's full name
+- company: their current company
+- title: their current job title/position
+- url: a LinkedIn profile URL if one appears in the text (otherwise "")
+
+THEN, write connection notes following these rules:
+- STRICT HARD LIMIT: under 300 characters total, including spaces.
+- Tone: warm, specific, slightly informal — like a smart student emailing a TA they
+  respect, not a sales pitch.
+- MUST reference one SPECIFIC detail about the person (their work, a project, their
+  path into the company/role, a post they made) — never generic flattery like
+  "I'm impressed by your career."
+- Find the connection angle yourself by comparing the student's background (given
+  below) against this person's profile. Look for genuine overlap: shared technical
+  interests, a tool/technology/domain both touch, a similar path (e.g. they also
+  started in a related major or did a similar project), or a specific aspect of
+  their current work that connects to something the student is learning or building.
+  Use that overlap as the reason for reaching out — it must feel like a real,
+  specific reason, not "I'd love to learn from you" alone.
+- ADAPT BASED ON ROLE: if this person's title/background suggests they are in HR,
+  recruiting, talent acquisition, or a people-ops function (not a hands-on technical
+  role), do NOT try to find a deep technical overlap. Instead, keep it brief and
+  genuine: acknowledge their role in connecting people with opportunities at the
+  company, and express interest in learning more about the company/team culture or
+  how they support new grads/interns. Keep it light — don't pretend to share
+  technical interests with someone in a non-technical role.
+- For technical/IC roles, weave in a relevant piece of the student's own background
+  (e.g. a specific project or interest) ONLY if it creates a natural, specific
+  connection — don't force it in if there's no real overlap; a good question can
+  work just as well.
+- NEVER mention internships, referrals, jobs, or opportunities. This is a first-touch
+  note only.
+- NO corporate buzzwords: avoid "synergy," "leverage," "passionate about,"
+  "reach out," "pick your brain."
+- Write like a 19-20 year old who is curious and a little informal, but respectful —
+  contractions are fine ("I'm," "that's").
+- Vary sentence structure and angle across the two notes — make them genuinely
+  different approaches, not just reworded versions of the same idea.
+
+Respond with ONLY valid JSON, no markdown fences, no preamble:
+{"name":"","company":"","title":"","url":"","notes":["note 1 text","note 2 text"]}`;
+
+  let userMsg = `Profile info:\n${profile}`;
+  if(myProfile.name) userMsg += `\n\nMy name: ${myProfile.name}`;
+  if(myProfile.details) userMsg += `\n\nMy background: ${myProfile.details}`;
+  userMsg += `\n\nGenerate 2 distinct connection note variations.`;
+
+  const WORKER_URL = localStorage.getItem('outreach_worker_url') || '';
+  if(!WORKER_URL){
+    status.textContent = 'No Worker URL set. Open Settings to add it first.';
+    status.className = 'status-line error';
+    btn.disabled = false;
+    btn.textContent = 'Generate notes';
+    return;
+  }
+
+  try{
+    const response = await fetch(WORKER_URL, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-6",
+        max_tokens:1000,
+        system: systemPrompt,
+        messages:[{role:"user", content:userMsg}]
+      })
+    });
+
+    const dataResp = await response.json();
+    const textBlock = (dataResp.content || []).find(b=>b.type==='text');
+    if(!textBlock) throw new Error('No response text returned.');
+
+    let cleaned = textBlock.text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(cleaned);
+    if(!parsed.notes || !Array.isArray(parsed.notes)) throw new Error('Unexpected response format.');
+
+    const extracted = {
+      name: (parsed.name || '').trim(),
+      company: (parsed.company || '').trim(),
+      title: (parsed.title || '').trim(),
+      url: (parsed.url || '').trim()
+    };
+
+    results.innerHTML = '';
+    parsed.notes.forEach((note, idx)=>{
+      const len = note.length;
+      const wrap = document.createElement('div');
+      wrap.className = 'note-result';
+
+      const p = document.createElement('p');
+      p.textContent = note;
+
+      const meta = document.createElement('div');
+      meta.className = 'note-meta';
+
+      const pill = document.createElement('span');
+      pill.className = 'count-pill ' + (len<=300 ? 'ok':'over');
+      pill.textContent = len + ' / 300 characters';
+
+      const actions = document.createElement('div');
+      actions.style.display='flex';
+      actions.style.gap='8px';
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'ghost copy-btn';
+      copyBtn.innerHTML = 'Copy';
+      copyBtn.addEventListener('click', ()=> copyText(note, copyBtn));
+
+      const sendBtn = document.createElement('button');
+      sendBtn.className = 'send-to-pipeline';
+      sendBtn.textContent = "I've sent this — add to pipeline →";
+      sendBtn.addEventListener('click', ()=> saveOrPrompt(note, extracted));
+
+      actions.appendChild(copyBtn);
+
+      meta.appendChild(pill);
+      meta.appendChild(actions);
+
+      wrap.appendChild(p);
+      wrap.appendChild(meta);
+      wrap.appendChild(sendBtn);
+      results.appendChild(wrap);
+    });
+
+    status.textContent = 'Pick the one that sounds most like you, copy it, send it on LinkedIn — then log it as sent below.';
+  }catch(err){
+    status.textContent = 'Error: ' + err.message;
+    status.className = 'status-line error';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Generate notes';
+  }
+}
+
+function copyText(text, btn){
+  const finish = (ok)=>{
+    const orig = btn.innerHTML;
+    btn.innerHTML = ok ? 'Copied' : 'Copy failed';
+    setTimeout(()=> btn.innerHTML = orig, 1200);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>finish(true)).catch(()=>fallbackCopy(text,finish));
+  } else {
+    fallbackCopy(text, finish);
+  }
+}
+function fallbackCopy(text, finish){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position='fixed';
+    ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    finish(true);
+  }catch(e){ finish(false); }
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+let pendingSave = null;
+
+function saveOrPrompt(note, extracted, profileText){
+  const today = new Date().toISOString().slice(0,10);
+  if(extracted.name){
+    // We have at least a name from extraction — save directly, no manual entry needed.
+    data.unshift({
+      id:cryptoId(), name:extracted.name, company:extracted.company, title:extracted.title,
+      url:extracted.url, status:'Sent', note:note, dateSent:today, dateAccepted:'',
+      lastContact:today, followUp:''
+    });
+    save();
+    showToast(`Saved ${extracted.name} to pipeline as "Sent"`);
+    return;
+  }
+
+  // No name could be extracted from the pasted text — ask only for the missing name.
+  openSaveModal(note, extracted);
+}
+
+function openSaveModal(note, extracted){
+  pendingSave = { note, extracted };
+  document.getElementById('modalName').value = '';
+  document.getElementById('modalCompany').value = extracted.company || '';
+  document.getElementById('modalTitle').value = extracted.title || '';
+  document.getElementById('modalUrl').value = extracted.url || '';
+  document.getElementById('modalStatus').textContent = "Couldn't find a name in what you pasted — add it to save.";
+  document.getElementById('modalStatus').className = 'status-line';
+
+  document.getElementById('saveModalOverlay').classList.add('open');
+  document.getElementById('modalName').focus();
+}
+
+function closeSaveModal(){
+  document.getElementById('saveModalOverlay').classList.remove('open');
+  pendingSave = null;
+}
+
+document.getElementById('modalCancel').addEventListener('click', closeSaveModal);
+document.getElementById('saveModalOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'saveModalOverlay') closeSaveModal();
+});
+
+document.getElementById('modalSave').addEventListener('click', ()=>{
+  if(!pendingSave) return;
+  const name = document.getElementById('modalName').value.trim();
+  const company = document.getElementById('modalCompany').value.trim();
+  const title = document.getElementById('modalTitle').value.trim();
+  const url = document.getElementById('modalUrl').value.trim();
+
+  if(!name){
+    const ms = document.getElementById('modalStatus');
+    ms.textContent = 'Add their name so you can find them later.';
+    ms.className = 'status-line error';
+    return;
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  data.unshift({
+    id:cryptoId(), name, company, title, url,
+    status:'Sent', note: pendingSave.note, dateSent:today, dateAccepted:'',
+    lastContact:today, followUp:''
+  });
+  save();
+  closeSaveModal();
+  showToast(`Saved ${name} to pipeline as "Sent"`);
+});
+
+// ---------- pipeline ----------
+const addRowBtn = document.getElementById('addRowBtn');
+const searchBox = document.getElementById('searchBox');
+const statusFilter = document.getElementById('statusFilter');
+addRowBtn.addEventListener('click', ()=>{
+  data.unshift({id:cryptoId(),name:'',company:'',title:'',url:'',status:'Researching',note:'',dateSent:'',dateAccepted:'',lastContact:'',followUp:''});
+  save();
+  renderPipeline();
+});
+searchBox.addEventListener('input', renderPipeline);
+statusFilter.addEventListener('change', renderPipeline);
+
+function isOverdue(c){
+  if(!c.followUp) return false;
+  if(CLOSED_STAGES.includes(c.status)) return false;
+  const fu = new Date(c.followUp + 'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  return fu < today;
+}
+
+function renderPipeline(){
+  const wrap = document.getElementById('pipelineTableWrap');
+  const q = searchBox.value.trim().toLowerCase();
+  const sf = statusFilter.value;
+
+  const filtered = data.filter(c=>{
+    if(sf && c.status !== sf) return false;
+    if(q && !(c.name.toLowerCase().includes(q) || c.company.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  if(filtered.length===0){
+    wrap.innerHTML = `<div class="empty-state">Nothing here yet. <span class="add-link" id="emptyAdd">Add your first contact</span> or generate a note and save it from there.</div>`;
+    const link = document.getElementById('emptyAdd');
+    if(link) link.addEventListener('click', ()=> addRowBtn.click());
+    return;
+  }
+
+  let html = '<div class="pl-list">';
+
+  filtered.forEach(c=>{
+    const charCount = c.note.length;
+    const countClass = charCount===0 ? '' : (charCount<=300 ? 'ok':'over');
+    html += `<div class="pl-card" data-id="${c.id}">
+      <div class="pl-identity">
+        <input type="text" class="f-name pl-name-input" value="${esc(c.name)}" placeholder="Name">
+        <input type="text" class="f-company" value="${esc(c.company)}" placeholder="Company">
+        <input type="text" class="f-title" value="${esc(c.title)}" placeholder="Title">
+        <input type="text" class="f-url" value="${esc(c.url)}" placeholder="LinkedIn URL">
+      </div>
+      <div class="pl-meta">
+        <select class="f-status">${ALL_STATUSES.map(s=>`<option value="${s}" ${s===c.status?'selected':''}>${s}</option>`).join('')}</select>
+        ${isOverdue(c) ? '<span class="overdue-flag">Follow-up overdue</span>' : ''}
+        <div class="date-row">
+          <div>
+            <label>Last contact</label>
+            <input type="date" class="f-lastContact" value="${c.lastContact}">
+          </div>
+          <div>
+            <label>Follow-up</label>
+            <input type="date" class="f-followUp" value="${c.followUp}">
+          </div>
+        </div>
+      </div>
+      <div class="pl-note-col">
+        <textarea class="f-note" placeholder="Connection note...">${esc(c.note)}</textarea>
+        <div class="count-pill ${countClass}" style="display:inline-block;margin-top:4px;">${charCount} / 300</div>
+      </div>
+      <div class="pl-actions">
+        <button class="danger-ghost f-delete" title="Remove from pipeline">Delete</button>
+      </div>
+    </div>`;
+  });
+
+  html += '</div>';
+  wrap.innerHTML = html;
+
+  // wire up events
+  wrap.querySelectorAll('.pl-card').forEach(card=>{
+    const id = card.dataset.id;
+    const item = data.find(d=>d.id===id);
+    if(!item) return;
+
+    const bind = (cls, field, evt='input')=>{
+      const el = card.querySelector('.'+cls);
+      if(!el) return;
+      el.addEventListener(evt, ()=>{
+        item[field] = el.value;
+        save();
+        if(field==='note'){
+          const pill = card.querySelector('.count-pill');
+          const len = el.value.length;
+          pill.textContent = len + ' / 300';
+          pill.className = 'count-pill ' + (len===0?'':(len<=300?'ok':'over'));
+        }
+        if(field==='status' || field==='followUp'){
+          renderPipeline();
+        }
+      });
+    };
+    bind('f-name','name'); bind('f-company','company'); bind('f-title','title'); bind('f-url','url');
+    bind('f-status','status','change'); bind('f-note','note'); bind('f-lastContact','lastContact','change');
+    bind('f-followUp','followUp','change');
+
+    const del = card.querySelector('.f-delete');
+    del.addEventListener('click', ()=>{
+      if(del.dataset.confirm === '1'){
+        data = data.filter(d=>d.id!==id);
+        save();
+        renderPipeline();
+        showToast('Removed from pipeline');
+      } else {
+        del.dataset.confirm = '1';
+        del.textContent = 'Confirm delete?';
+        del.classList.add('confirming');
+        setTimeout(()=>{
+          if(del.isConnected && del.dataset.confirm === '1'){
+            del.dataset.confirm = '0';
+            del.textContent = 'Delete';
+            del.classList.remove('confirming');
+          }
+        }, 3000);
+      }
+    });
+  });
+}
+
+// ---------- weekly sync ----------
+function renderSync(){
+  const card = document.getElementById('syncCard');
+  const pending = data.filter(c => c.status === 'Sent');
+
+  if(pending.length === 0){
+    card.innerHTML = `<div class="sync-empty">No contacts marked "Sent" right now. Send some connection requests, mark them "Sent" in the Pipeline, then come back here once a week.</div>`;
+    return;
+  }
+
+  let html = '';
+  pending.forEach(c=>{
+    const sentInfo = c.dateSent ? `Sent ${c.dateSent}` : 'No send date logged';
+    html += `<div class="sync-item" data-id="${c.id}">
+      <input type="checkbox" class="sync-check">
+      <div class="info">
+        <div class="nm">${esc(c.name)||'Unnamed'} ${c.company ? '— '+esc(c.company) : ''}</div>
+        <div class="sub">${esc(c.title)}</div>
+      </div>
+      <div class="badge">${sentInfo}</div>
+    </div>`;
+  });
+  html += `<div class="sync-footer"><button class="primary" id="syncApplyBtn">Mark checked as Accepted</button></div>`;
+  card.innerHTML = html;
+
+  document.getElementById('syncApplyBtn').addEventListener('click', ()=>{
+    const checked = card.querySelectorAll('.sync-check:checked');
+    if(checked.length === 0){
+      showToast('Nothing checked — tick anyone who accepted on LinkedIn');
+      return;
+    }
+    const today = new Date().toISOString().slice(0,10);
+    checked.forEach(cb=>{
+      const id = cb.closest('.sync-item').dataset.id;
+      const item = data.find(d=>d.id===id);
+      if(item){
+        item.status = 'Accepted';
+        item.dateAccepted = today;
+        item.lastContact = today;
+      }
+    });
+    save();
+    showToast(`Marked ${checked.length} as Accepted`);
+    renderSync();
+  });
+}
+
+function esc(s){
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+// ---------- dashboard ----------
+function renderDashboard(){
+  const grid = document.getElementById('statGrid');
+  const total = data.length;
+  const counts = {};
+  ALL_STATUSES.forEach(s=>counts[s]=0);
+  data.forEach(c=> counts[c.status] = (counts[c.status]||0)+1);
+
+  const overdue = data.filter(isOverdue).length;
+  const engagedStatuses = ['Sent','Accepted','Replied','Conversation Ongoing','Referral Asked','Referred','Declined / No response','Not pursuing'];
+  const respondedStatuses = ['Accepted','Replied','Conversation Ongoing','Referral Asked','Referred','Declined / No response','Not pursuing'];
+  const fullyEngaged = engagedStatuses.reduce((sum,s)=>sum+counts[s],0);
+  const acceptanceRate = fullyEngaged>0 ? Math.round(respondedStatuses.reduce((sum,s)=>sum+counts[s],0)/fullyEngaged*100) : 0;
+  const referrals = counts['Referred'];
+
+  grid.innerHTML = `
+    <div class="stat"><div class="num mono">${total}</div><div class="lbl">Total contacts</div></div>
+    <div class="stat"><div class="num mono">${counts['Sent']}</div><div class="lbl">Awaiting response</div></div>
+    <div class="stat amber"><div class="num mono">${counts['Accepted']+counts['Replied']+counts['Conversation Ongoing']}</div><div class="lbl">In conversation</div></div>
+    <div class="stat"><div class="num mono">${counts['Referral Asked']}</div><div class="lbl">Referral asked</div></div>
+    <div class="stat"><div class="num mono">${referrals}</div><div class="lbl">Referrals received</div></div>
+    <div class="stat"><div class="num mono">${acceptanceRate}%</div><div class="lbl">Acceptance rate</div></div>
+    <div class="stat ${overdue>0?'warn':''}"><div class="num mono">${overdue}</div><div class="lbl">Follow-ups overdue</div></div>
+  `;
+
+  // stage overview - signature element
+  const stageWrap = document.getElementById('stageOverview');
+  const progCounts = PROGRESSION_STAGES.map(p => p.statuses.reduce((sum,s)=> sum + (counts[s]||0), 0));
+  const maxCount = Math.max(1, ...progCounts);
+  let stageHtml = '<div style="display:flex;gap:8px;align-items:flex-end;height:120px;">';
+  PROGRESSION_STAGES.forEach((p,i)=>{
+    const c = progCounts[i];
+    const h = Math.max(4, Math.round((c/maxCount)*100));
+    stageHtml += `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
+        <div class="mono" style="font-size:12px;margin-bottom:4px;color:var(--ink);">${c}</div>
+        <div style="width:100%;background:${c>0?'var(--accent)':'var(--line)'};border-radius:4px 4px 0 0;height:${h}%;transition:height .2s;"></div>
+      </div>`;
+  });
+  stageHtml += '</div><div style="display:flex;gap:8px;margin-top:6px;">';
+  PROGRESSION_STAGES.forEach(p=>{
+    stageHtml += `<div style="flex:1;text-align:center;font-size:10px;color:var(--slate-soft);line-height:1.3;">${p.label}</div>`;
+  });
+  stageHtml += '</div>';
+  stageWrap.innerHTML = stageHtml;
+
+  // overdue list
+  const overdueCard = document.getElementById('overdueCard');
+  const overdueList = document.getElementById('overdueList');
+  const overdueContacts = data.filter(isOverdue);
+  if(overdueContacts.length>0){
+    overdueCard.style.display = 'block';
+    overdueList.innerHTML = overdueContacts.map(c=>`
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;">
+        <div><b>${esc(c.name)||'Unnamed'}</b> — ${esc(c.company)}</div>
+        <div class="mono" style="color:var(--warn);">${c.followUp}</div>
+      </div>`).join('');
+  } else {
+    overdueCard.style.display = 'none';
+  }
+}
+
+// initial render
+renderDashboard();
+
+// ---------- settings ----------
+function initSettings(){
+  const workerInput = document.getElementById('workerUrl');
+  workerInput.value = localStorage.getItem('outreach_worker_url') || '';
+
+  document.getElementById('saveWorkerBtn').addEventListener('click', ()=>{
+    const url = workerInput.value.trim();
+    if(!url){
+      document.getElementById('workerStatus').textContent = 'Paste your Worker URL first.';
+      document.getElementById('workerStatus').className = 'status-line error';
+      return;
+    }
+    localStorage.setItem('outreach_worker_url', url);
+    document.getElementById('workerStatus').textContent = 'Saved. Go to Generate to try it.';
+    document.getElementById('workerStatus').className = 'status-line';
+    showToast('Worker URL saved');
+  });
+
+  document.getElementById('testWorkerBtn').addEventListener('click', async ()=>{
+    const url = localStorage.getItem('outreach_worker_url') || '';
+    const ts = document.getElementById('testStatus');
+    if(!url){
+      ts.textContent = 'No Worker URL saved yet.';
+      ts.className = 'status-line error';
+      return;
+    }
+    ts.textContent = 'Testing...';
+    ts.className = 'status-line';
+    try{
+      const resp = await fetch(url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-6', max_tokens:10,
+          messages:[{role:'user', content:'ping'}]
+        })
+      });
+      if(resp.ok || resp.status === 400){
+        ts.textContent = 'Worker is reachable. Ready to generate notes.';
+        ts.className = 'status-line';
+      } else {
+        ts.textContent = `Worker responded with status ${resp.status}. Check your Worker code.`;
+        ts.className = 'status-line error';
+      }
+    }catch(e){
+      ts.textContent = `Could not reach Worker: ${e.message}`;
+      ts.className = 'status-line error';
+    }
+  });
+
+  // export
+  document.getElementById('exportBtn').addEventListener('click', ()=>{
+    const payload = { pipeline: data, myProfile, exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `outreach-pipeline-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    showToast('Pipeline exported');
+  });
+
+  // import
+  const importFile = document.getElementById('importFile');
+  document.getElementById('importBtn').addEventListener('click', ()=> importFile.click());
+  importFile.addEventListener('change', ()=>{
+    const file = importFile.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      try{
+        const parsed = JSON.parse(e.target.result);
+        const incoming = parsed.pipeline || parsed; // handle both formats
+        if(!Array.isArray(incoming)) throw new Error('Invalid format');
+        const existingIds = new Set(data.map(d=>d.id));
+        const newItems = incoming.filter(d=> d.id && !existingIds.has(d.id));
+        data = [...newItems, ...data];
+        save();
+        if(parsed.myProfile && !myProfile.name && !myProfile.details){
+          myProfile = parsed.myProfile;
+          saveMyProfile();
+        }
+        document.getElementById('importStatus').textContent = `Imported ${newItems.length} new contacts (${incoming.length - newItems.length} already existed).`;
+        document.getElementById('importStatus').className = 'status-line';
+        showToast(`Imported ${newItems.length} contacts`);
+      }catch(err){
+        document.getElementById('importStatus').textContent = 'Could not parse file — make sure it\'s a valid export from this app.';
+        document.getElementById('importStatus').className = 'status-line error';
+      }
+    };
+    reader.readAsText(file);
+    importFile.value = '';
+  });
+
+  // clear data
+  const clearBtn = document.getElementById('clearDataBtn');
+  clearBtn.addEventListener('click', ()=>{
+    if(clearBtn.dataset.confirm === '1'){
+      data = [];
+      save();
+      clearBtn.dataset.confirm = '0';
+      clearBtn.textContent = 'Clear all pipeline data';
+      clearBtn.classList.remove('confirming');
+      document.getElementById('clearStatus').textContent = 'All pipeline data cleared.';
+      showToast('Pipeline cleared');
+    } else {
+      clearBtn.dataset.confirm = '1';
+      clearBtn.textContent = 'Are you sure? Click again to confirm';
+      clearBtn.classList.add('confirming');
+      setTimeout(()=>{
+        if(clearBtn.dataset.confirm === '1'){
+          clearBtn.dataset.confirm = '0';
+          clearBtn.textContent = 'Clear all pipeline data';
+          clearBtn.classList.remove('confirming');
+        }
+      }, 4000);
+    }
+  });
+}
+initSettings();
+</script>
+</body>
+</html>
